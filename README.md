@@ -35,8 +35,12 @@ show up in the texthooker page. This requires the user to manually delete the
 unwanted copied text on the page.
 
 ## Build
+Ensure you have Rust installed. The installation instructions can be found
+[here](https://www.rust-lang.org/learn/get-started). Then you can build the
+binary with
+
 ```
-cargo build
+cargo build --release
 ```
 
 ## Install
@@ -45,7 +49,7 @@ Pre-compiled binaries are available in the
 [Releases](https://github.com/kuroahna/mpv_websocket/releases) page
 
 ### Windows
-1. Copy `mpv_websocket.exe` into your
+1. Copy the `mpv_websocket.exe` binary file into your
    [%appdata%\mpv](https://mpv.io/manual/stable/#files-on-windows) folder.
    Create the folder if it does not already exist
 2. Copy [mpv.conf](mpv/mpv.conf) into your
