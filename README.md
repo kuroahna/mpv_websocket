@@ -8,7 +8,7 @@ clients. The plugin uses mpv's
 [JSON IPC](https://mpv.io/manual/master/#json-ipc) protocol for capturing the
 subtitles.
 
-On Linux/Mac, by specifing
+On Linux/Mac, by specifying
 [--input-ipc-server](https://mpv.io/manual/master/#options-input-ipc-server)
 in the command line arguments or
 [mpv.conf](https://mpv.io/manual/master/#files-~/-config/mpv/mpv-conf), a
@@ -40,6 +40,9 @@ cargo build
 ```
 
 ## Install
+
+Pre-compiled binaries are available in the
+[Releases](https://github.com/kuroahna/mpv_websocket/releases) page
 
 ### Windows
 1. Copy `mpv_websocket.exe` into your
