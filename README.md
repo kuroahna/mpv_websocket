@@ -57,7 +57,7 @@ Pre-compiled binaries are available in the
    folder. Create the folder if it does not already exist
 
 ### Linux
-1. Copy `mpv_websocket` into your
+1. Copy the `mpv_websocket` binary file into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
    folder if it does not already exist
 2. Copy [mpv.conf](mpv/mpv.conf) into your
@@ -71,7 +71,7 @@ Pre-compiled binaries are available in the
 ### Mac
 Note, I do not have a Mac and cannot test it, but it should be the same as Linux
 
-1. Copy `mpv_websocket` into your
+1. Copy the `mpv_websocket` binary file into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
    folder if it does not already exist
 2. Copy [mpv.conf](mpv/mpv.conf) into your
@@ -81,6 +81,20 @@ Note, I do not have a Mac and cannot test it, but it should be the same as Linux
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
    Create the folder if it does not already exist
+
+## Troubleshooting
+If mpv_websocket doesn't seem to work:
+-   Ensure you are using the
+    [latest version of mpv](https://mpv.io/installation/).
+
+    Note that for Linux, some package managers may distribute old versions
+    of mpv. According to mpv's official documentation, it is recommended that
+    you compile mpv using
+    [mpv-build](https://github.com/mpv-player/mpv-build/),
+    or use third party libraries instead.
+
+-   Try [manually building](#build) the binary instead of using the
+    pre-compiled binary.
 
 ## Usage
 
