@@ -35,6 +35,9 @@ show up in the texthooker page. This requires the user to manually delete the
 unwanted copied text on the page.
 
 ## Build
+If you want to build the binary yourself, you can follow the instructions below.
+Otherwise, skip to the [Install](#install) section.
+
 Ensure you have Rust installed. The installation instructions can be found
 [here](https://www.rust-lang.org/learn/get-started). Then you can build the
 binary with
