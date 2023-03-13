@@ -112,7 +112,7 @@ If mpv_websocket doesn't seem to work:
 ## Usage
 
 After installing the plugin, when you play a video using mpv with subtitles, mpv
-will automatically start the `mpv_websocket` server at `ws://0.0.0.0:6677` (or
+will automatically start the `mpv_websocket` server at `ws://localhost:6677` (or
 the port you have specified in the script)
 
 You will need a WebSocket client such as
