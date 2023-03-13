@@ -1,3 +1,6 @@
+-- mpv_websocket
+-- https://github.com/kuroahna/mpv_websocket
+
 local utils = require 'mp.utils'
 
 local config_file_path = mp.find_config_file("mpv.conf")
