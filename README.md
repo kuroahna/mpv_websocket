@@ -65,6 +65,18 @@ Pre-compiled binaries are available in the
    [%appdata%\mpv\scripts](https://mpv.io/manual/stable/#files-on-windows)
    folder. Create the folder if it does not already exist
 
+<details><summary>Expected file structure</summary>
+
+```
+%appdata%\mpv
+├── mpv.conf
+├── mpv_websocket.exe
+└── scripts
+    └── run_websocket_server_windows.lua
+```
+
+</details>
+
 ### Linux
 1. Copy the
    [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-unknown-linux-gnu.zip)
@@ -78,6 +90,19 @@ Pre-compiled binaries are available in the
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
    Create the folder if it does not already exist
+
+<details><summary>Expected file structure</summary>
+
+```
+~/.config/mpv/
+├── mpv.conf
+├── mpv_websocket
+└── scripts
+    └── run_websocket_server_linux.lua
+```
+
+</details>
+
 
 ### Mac
 Note, I do not have a Mac and cannot test it, but it should be the same as Linux
@@ -94,6 +119,18 @@ Note, I do not have a Mac and cannot test it, but it should be the same as Linux
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
    Create the folder if it does not already exist
+
+<details><summary>Expected file structure</summary>
+
+```
+~/.config/mpv/
+├── mpv.conf
+├── mpv_websocket
+└── scripts
+    └── run_websocket_server_linux.lua
+```
+
+</details>
 
 ## Troubleshooting
 If after following the [Installation](#install) steps and mpv_websocket doesn't
