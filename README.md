@@ -142,7 +142,9 @@ seem to work:
   ```
 
   This error indicates that mpv did not create the IPC socket. You should double
-  check that [mpv.conf](mpv/mpv.conf) has been properly installed.
+  check that [mpv.conf](mpv/mpv.conf) has been properly installed. You should
+  also double check that mpv is running _before_ running the mpv_websocket
+  binary in the terminal
 
   ```
   > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
