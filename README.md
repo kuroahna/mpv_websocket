@@ -99,38 +99,8 @@ Note, I do not have a Mac and cannot test it, but it should be the same as Linux
 If after following the [Installation](#install) steps and mpv_websocket doesn't
 seem to work:
 
-- If you are on Windows, double check that you have correctly installed the
-  [mpv_websocket.exe](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-pc-windows-gnu.zip)
-  binary file into your
-  [%appdata%\mpv](https://mpv.io/manual/stable/#files-on-windows) folder
-
-  If you are on Linux, double check that you have correctly installed the
-  [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-unknown-linux-gnu.zip)
-  binary file into your
-  [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
-
-  If you are on Mac, double check that you have correctly installed the
-  [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-apple-darwin.zip)
-  binary file into your
-  [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
-
-- If you are on Windows, double check that you have correctly installed the
-  [mpv.conf](mpv/mpv.conf) file into your
-  [%appdata%\mpv](https://mpv.io/manual/stable/#files-on-windows) folder
-
-  If you are on Linux/Mac, double check that you have correctly installed the
-  [mpv.conf](mpv/mpv.conf) file into your
-  [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
-
-- If you are on Windows, double check that you have correctly installed the
-  [run_websocket_server_windows.lua](mpv/scripts/run_websocket_server_windows.lua)
-  script into your
-  [%appdata%\mpv\scripts](https://mpv.io/manual/stable/#files-on-windows) folder
-
-  If you are on Linux/Mac, double check that you have correctly installed the
-  [run_websocket_server_linux.lua](mpv/scripts/run_websocket_server_linux.lua)
-  script into your
-  [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder
+- Double check that you have correctly installed the files in the correct
+  folders for your platform. See the [Install](#install) guide for more details.
 
 - Try running the mpv_websocket binary file in a terminal manually to see if
   there's any errors with running the server.
