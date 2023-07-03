@@ -53,7 +53,7 @@ Pre-compiled binaries are available in the
 
 ### Windows
 1. Copy the
-   [mpv_websocket.exe](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-pc-windows-gnu.zip)
+   [mpv_websocket.exe](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-pc-windows-gnu.zip)
    binary file into your
    [%appdata%\mpv](https://mpv.io/manual/stable/#files-on-windows) folder.
    Create the folder if it does not already exist
@@ -79,7 +79,7 @@ Pre-compiled binaries are available in the
 
 ### Linux
 1. Copy the
-   [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-unknown-linux-gnu.zip)
+   [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-unknown-linux-musl.zip)
    binary file into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
    folder if it does not already exist
@@ -108,7 +108,7 @@ Pre-compiled binaries are available in the
 Note, I do not have a Mac and cannot test it, but it should be the same as Linux
 
 1. Copy the
-   [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/download/0.1.0/x86_64-apple-darwin.zip)
+   [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-apple-darwin.zip)
    binary file into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
    folder if it does not already exist
