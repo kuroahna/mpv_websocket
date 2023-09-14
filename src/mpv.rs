@@ -1,8 +1,11 @@
-use std::path::PathBuf;
+use serde_json::Value;
 
 use parity_tokio_ipc::{Connection, Endpoint};
 use serde::Deserialize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+#[cfg(feature = "talk-tts")]
+use tts::*;
 
 use crate::websocket;
 
@@ -15,24 +18,24 @@ const OBSERVE_PROPERTY_SUB_TEXT: &[u8; 46] =
 const UTF8_NULL_CHARACTER: u8 = 0;
 const UTF8_NEWLINE_CHARACTER: u8 = b"\n"[0];
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 enum EventType {
     #[serde(rename = "property-change")]
     PropertyChange,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 enum Property {
     #[serde(rename = "sub-text")]
     SubText,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 struct PropertyChangeEvent {
     event: EventType,
     id: u32,
     name: Property,
-    data: String,
+    data: Option<Value>,
 }
 
 pub struct Client {
@@ -80,6 +83,8 @@ impl Client {
 
 impl ConnectedClient {
     pub async fn poll_and_send_messages_to_server(&mut self, server: websocket::ServerStarted) {
+        #[cfg(feature = "talk-tts")]
+        let mut tts = Tts::default().unwrap();
         let mut buffer = Vec::new();
         loop {
             self.connection
@@ -120,7 +125,17 @@ impl ConnectedClient {
                     continue;
                 }
 
-                server.send_message(event.data);
+                if event.name==crate::mpv::Property::SubText  {
+                    if let Some(data) = &event.data {
+                        let speak = data.to_string();
+                        if speak.len()>2 {
+                            println!("{}",&speak);
+                            #[cfg(feature = "talk-tts")]
+                            tts.speak(&speak.replace("\\n"," "),false).ok();
+                        server.send_message(speak);
+                        }
+                    }
+                }
             }
 
             buffer.clear();
