@@ -9,7 +9,7 @@ local mpv_websocket_path = utils.join_path(config_folder_path, "mpv_websocket.ex
 local initialised_websocket
 
 local function start_websocket()
-	mp.command_native_async({
+	initialised_websocket = mp.command_native_async({
 		name = "subprocess",
 		playback_only = false,
 		capture_stdout = true,
