@@ -32,10 +32,8 @@ end
 local function toggle_websocket()
 	local paused = mp.get_property_bool('pause')
 	if initialised_websocket and paused then
-		mp.osd_message('end websocket')
 		end_websocket()
 	elseif not initialised_websocket and not paused then
-		mp.osd_message('start websocket')
 		start_websocket()
 	end
 end
