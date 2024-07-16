@@ -218,3 +218,20 @@ the port you have specified in the script)
 You will need a WebSocket client such as
 [texthooker-ui](https://github.com/Renji-XD/texthooker-ui) to stream the
 subtitles and display it to your browser.
+
+If you do use `texthooker-ui` to stream the subtitles, you can also take advantage
+of the included `togglewebsocket` command to disable the WebSocket connection and
+pause the timer on the text hooker page. This is useful for if you want to automatically
+pause the timer whenever mpv is paused. To do this, follow the below steps:
+
+1. If you do not have an existing `input.conf` file in the same folder as your
+   `mpv.conf`, copy [input.conf](mpv/input.conf) there. Skip to step 3.
+2. Otherwise, if you have an existing one, you should open it and copy the lines
+   in [input.conf](mpv/input.conf) to it.
+3. Make sure the following settings are enabled on the text hooker page:
+   - `Allow new Line during Pause` – receives new subtitles regardless of pause
+     status
+   - `Autostart Timer by Line during Pause` – unpauses the timer when the text hooker
+     page receives a new subtitle
+   - `Continuous Reconnect` – picks up the new WebSocket connection when it is
+     available
