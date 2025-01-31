@@ -105,8 +105,6 @@ Pre-compiled binaries are available in the
 
 
 ### Mac
-Note, I do not have a Mac and cannot test it, but it should be the same as Linux
-
 1. Copy the
    [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-apple-darwin.zip)
    binary file into your
