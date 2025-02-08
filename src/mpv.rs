@@ -27,6 +27,7 @@ enum Property {
     SubText,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct PropertyChangeEvent {
     event: EventType,

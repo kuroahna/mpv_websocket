@@ -2,6 +2,10 @@
 name = "mpv_websocket"
 version = "0.2.0"
 edition = "2021"
+authors = ["kuroahna"]
+repository = "https://github.com/kuroahna/mpv_websocket"
+homepage = "https://github.com/kuroahna/mpv_websocket"
+license = "MIT"
 
 [profile.dev]
 opt-level = 1
@@ -18,11 +22,11 @@ clap = { version = "4.5.9", features = ["derive"] }
 parity-tokio-ipc = "0.9.0"
 serde = { version = "1.0.155", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.94", default-features = false, features = [
-    "std",
+  "std",
 ] }
 tokio = { version = "1.26.0", default-features = false, features = [
-    "macros",
-    "rt-multi-thread",
-    "io-util",
+  "macros",
+  "rt-multi-thread",
+  "io-util",
 ] }
 ws = { version = "0.9.2", default-features = false }
