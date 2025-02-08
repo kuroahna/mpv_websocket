@@ -99,20 +99,23 @@ impl ConnectedClient {
                 Some(last_byte) => *last_byte,
                 None => UTF8_NULL_CHARACTER,
             };
-            // mpv ends each response with a newline
-            // The buffer may not be completely filled with the full response, so we should continue reading
+            // mpv ends each response with a newline.
+            // The buffer may not be completely filled with the full response,
+            // so we should continue reading
             if last_byte != UTF8_NEWLINE_CHARACTER {
                 continue;
             }
             let responses =
                 std::str::from_utf8(&buffer).expect("mpv should respond with UTF-8 strings");
 
-            // There may be multiple responses in the buffer, separated by a newline
+            // There may be multiple responses in the buffer, separated by a
+            // newline
             for line in responses.lines() {
                 let event = match serde_json::from_str::<PropertyChangeEvent>(line) {
                     Ok(event) => event,
                     Err(_) => {
-                        // mpv sends other event changes in the socket that we don't care about
+                        // mpv sends other event changes in the socket that we
+                        // don't care about
                         continue;
                     }
                 };
@@ -121,7 +124,7 @@ impl ConnectedClient {
                     continue;
                 }
 
-                server.send_message(event.data);
+                server.send_message(event.data.into());
             }
 
             buffer.clear();

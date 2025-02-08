@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade serde_json dependency to 1.0.138.
 - Upgrade tokio dependency to 1.43.0.
 
+### Security
+
+- [RUSTSEC-2020-0016](https://rustsec.org/advisories/RUSTSEC-2020-0016) Replace
+ws crate with tungstenite and mio.
+
 ## [0.2.0] - 2024-07-16
 
 ### Added
