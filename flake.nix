@@ -52,6 +52,55 @@
           }
         );
 
+        crossCompileForLinuxMuslX64 =
+          let
+            targetTriple = "x86_64-unknown-linux-musl";
+
+            toolchain =
+              p:
+              p.rust-bin.stable.latest.default.override {
+                targets = [ targetTriple ];
+              };
+            craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+
+            src = craneLib.cleanCargoSource ./.;
+
+            commonArgs = {
+              inherit src;
+              strictDeps = true;
+            };
+
+            cargoArtifacts = craneLib.buildDepsOnly (
+              commonArgs
+              // {
+                buildPhaseCargoCommand = ''
+                  cargo check --profile release --frozen --target ${targetTriple}
+                  cargo build --profile release --frozen --target ${targetTriple} --workspace
+                '';
+                checkPhaseCargoCommand = ''
+                  cargo test --profile release --frozen --target ${targetTriple} --workspace --no-run
+                '';
+              }
+            );
+
+            mpv_websocket = craneLib.buildPackage (
+              commonArgs
+              // {
+                inherit cargoArtifacts;
+
+                cargoExtraArgs = "--frozen --target ${targetTriple} --workspace";
+              }
+            );
+          in
+          {
+            src = src;
+            commonArgs = commonArgs;
+            craneLib = craneLib;
+            cargoArtifacts = cargoArtifacts;
+            mpv_websocket = mpv_websocket;
+            targetTriple = targetTriple;
+          };
+
         crossCompileForWindowsX64 =
           let
             targetTriple = "x86_64-pc-windows-gnu";
@@ -137,6 +186,7 @@
       {
         formatter = pkgs.nixfmt-rfc-style;
         packages.default = mpv_websocket;
+        packages.linuxMuslX64 = crossCompileForLinuxMuslX64.mpv_websocket;
         packages.windowsX64 = crossCompileForWindowsX64.mpv_websocket;
         checks = {
           inherit mpv_websocket;
