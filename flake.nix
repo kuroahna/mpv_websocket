@@ -9,6 +9,10 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    advisory-db = {
+      url = "github:rustsec/advisory-db";
+      flake = false;
+    };
   };
 
   outputs =
@@ -18,6 +22,7 @@
       nixpkgs,
       crane,
       rust-overlay,
+      advisory-db,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -150,6 +155,10 @@
 
           toml_format = craneLib.taploFmt {
             src = pkgs.lib.sources.sourceFilesBySuffices src [ ".toml" ];
+          };
+
+          audit = craneLib.cargoAudit {
+            inherit src advisory-db;
           };
 
           deny = craneLib.cargoDeny { inherit src; };
