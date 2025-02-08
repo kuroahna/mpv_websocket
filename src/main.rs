@@ -14,7 +14,7 @@ struct Args {
     #[arg(short('a'), long, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
     websocket_server_bind_address: IpAddr,
 
-    #[arg(short, long, default_value_t = 6677)]
+    #[arg(short('p'), visible_short_alias('w'), long, default_value_t = 6677)]
     websocket_server_port: u16,
 }
 
