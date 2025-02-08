@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade clap dependency to 4.5.28.
 - Upgrade serde dependency to 1.0.217.
 - Upgrade serde_json dependency to 1.0.138.
+- Upgrade tokio dependency to 1.43.0.
 
 ## [0.2.0] - 2024-07-16
 
