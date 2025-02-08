@@ -1,0 +1,96 @@
+name: "Build artifacts"
+on:
+  pull_request:
+  push:
+    branches:
+      - "master"
+  workflow_dispatch:
+
+jobs:
+  build_mpv_websocket_linux_musl_x64:
+    name: Build mpv WebSocket Linux musl x64
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v16
+
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Build mpv WebSocket Linux musl x64
+      run: |
+        nix build --print-build-logs .#linuxMuslX64
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-unknown-linux-musl
+        path: result/bin/mpv_websocket
+
+  build_mpv_websocket_windows_x64:
+    name: Build mpv WebSocket Windows x64
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v16
+
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Build mpv WebSocket Windows x64
+      run: |
+        nix build --print-build-logs .#windowsX64
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-pc-windows-gnu
+        path: result/bin/mpv_websocket.exe
+
+  build_mpv_websocket_mac_x64:
+    name: Build mpv WebSocket Mac x64
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v16
+
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Build mpv WebSocket Mac x64
+      run: |
+        nix build --print-build-logs
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-apple-darwin
+        path: result/bin/mpv_websocket
+
+  build_mpv_websocket_mac_aarch64:
+    name: Build mpv WebSocket Mac aarch64
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v16
+
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Build mpv WebSocket Mac aarch64
+      run: |
+        nix build --print-build-logs
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: aarch64-apple-darwin
+        path: result/bin/mpv_websocket
