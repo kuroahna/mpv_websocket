@@ -415,6 +415,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tungstenite",
+ "winapi",
 ]
 
 [[package]]

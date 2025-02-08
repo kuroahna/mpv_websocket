@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- winapi dependency to fix unresolved winerror import error caused by
+  parity-tokio-ipc for Windows.
+
 ### Changed
 
 - Upgrade to stable Rust 1.84.0.
