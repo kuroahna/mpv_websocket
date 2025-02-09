@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `aarch64-apple-darwih` pre-compiled binary for Mac users with the newer Apple
   silicon chip. Users with Intel-based Macs should continue using
   `x86_64-apple-darwin`.
+- Optional `-a` flag to change the WebSocket server bind address.
 - winapi dependency to fix unresolved winerror import error caused by
   parity-tokio-ipc for Windows.
 
