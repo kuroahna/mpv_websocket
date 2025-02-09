@@ -107,15 +107,21 @@ Pre-compiled binaries are available in the
 
 
 ### Mac
-1. Copy the
-   [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-apple-darwin.zip)
-   binary file into your
-   [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
-   folder if it does not already exist
-2. Make the above file executable by running the command `chmod +x ~/.config/mpv/mpv_websocket`
-3. Copy [mpv.conf](mpv/mpv.conf) into your
+1. [Verify](https://support.apple.com/en-ca/116943) whether you have a Mac
+   computer with Apple silicon or an Intel-based Mac
+   * **(Apple silicon)** Copy the
+     [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/aarch64-apple-darwin.zip)
+     binary file into your
+     [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
+     folder if it does not already exist
+   * **(Intel-based Mac)** Copy the
+     [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-apple-darwin.zip)
+     binary file into your
+     [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
+     folder if it does not already exist
+2. Copy [mpv.conf](mpv/mpv.conf) into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
-4. Copy
+3. Copy
    [run_websocket_server_linux.lua](mpv/scripts/run_websocket_server_linux.lua)
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
@@ -198,6 +204,43 @@ seem to work:
   did not automatically close, so double check if it is running via Task Manager
   (Windows) or `pgrep mpv_websocket` (Linux/Mac).
 
+  ```
+  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
+
+  bash: ~/.config/mpv/mpv_websocket: Permission denied
+  ```
+
+   This error indicates that there is insufficient privileges to run
+   `mpv_websocket`. This is most likely due to the file not being executable.
+   Verify that the file is executable by running `ls -la ~/.config/mpv`
+
+  ```
+  > ls -la ~/.config/mpv
+
+  total 1312
+  drwxr-xr-x 2 my_user users    4096 Feb  9 01:50 .
+  drwxr-xr-x 3 my_user users    4096 Feb  9 01:50 ..
+  -rw-r--r-- 1 my_user users 1333536 Jul 11  2024 mpv_websocket
+  ```
+
+  As seen above, the file is not executable. This can be fixed by running
+  `chmod +x ~/.config/mpv/mpv_websocket` and verified by running
+  `ls -la ~/.config/mpv`.
+
+  ```
+  > chmod +x ~/.config/mpv/mpv_websocket
+
+  > ls -la ~/.config/mpv
+
+  total 1312
+  drwxr-xr-x 2 my_user users    4096 Feb  9 01:50 .
+  drwxr-xr-x 3 my_user users    4096 Feb  9 01:50 ..
+  -rwxr-xr-x 1 my_user users 1333536 Jul 11  2024 mpv_websocket
+  ```
+
+  The file is now executable as indicated by the `x` flag on the `mpv_websocket`
+  file.
+
 - Ensure you are using the
   [latest version of mpv](https://mpv.io/installation/).
 
@@ -222,8 +265,9 @@ subtitles and display it to your browser.
 
 If you do use `texthooker-ui` to stream the subtitles, you can also take advantage
 of the included `togglewebsocket` command to disable the WebSocket connection and
-pause the timer on the text hooker page. This is useful for if you want to automatically
-pause the timer whenever mpv is paused. To do this, follow the below steps:
+pause the timer on the text hooker page. This is useful for if you want to
+automatically pause the timer whenever mpv is paused. To do this, follow the
+below steps:
 
 1. If you do not have an existing `input.conf` file in the same folder as your
    `mpv.conf`, copy [input.conf](mpv/input.conf) there. Skip to step 3.
@@ -232,7 +276,7 @@ pause the timer whenever mpv is paused. To do this, follow the below steps:
 3. Make sure the following settings are enabled on the text hooker page:
    - `Allow new Line during Pause` – receives new subtitles regardless of pause
      status
-   - `Autostart Timer by Line during Pause` – unpauses the timer when the text hooker
-     page receives a new subtitle
+   - `Autostart Timer by Line during Pause` – unpauses the timer when the text
+     hooker page receives a new subtitle
    - `Continuous Reconnect` – picks up the new WebSocket connection when it is
      available
