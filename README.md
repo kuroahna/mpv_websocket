@@ -213,8 +213,8 @@ seem to work:
 ## Usage
 
 After installing the plugin, when you play a video using mpv with subtitles, mpv
-will automatically start the `mpv_websocket` server at `ws://localhost:6677` (or
-the port you have specified in the script)
+will automatically start the `mpv_websocket` server and can be connected at
+`ws://localhost:6677` (or the address/port you have specified in the script)
 
 You will need a WebSocket client such as
 [texthooker-ui](https://github.com/Renji-XD/texthooker-ui) to stream the
