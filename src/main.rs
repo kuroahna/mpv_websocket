@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+mod mio_channel;
 mod mpv;
 mod websocket;
 
@@ -22,12 +23,20 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
+    println!(
+        "Starting WebSocket server at `{}:{}`",
+        args.websocket_server_bind_address, args.websocket_server_port
+    );
     let server = websocket::Server::new(SocketAddr::new(
         args.websocket_server_bind_address,
         args.websocket_server_port,
     ))
     .start();
 
+    println!(
+        "Connecting to mpv socket at `{}`",
+        args.mpvsocket_path.display()
+    );
     mpv::Client::new(args.mpvsocket_path)
         .connect()
         .await
