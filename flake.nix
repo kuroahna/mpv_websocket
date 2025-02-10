@@ -212,8 +212,45 @@
           };
 
           deny = craneLib.cargoDeny { inherit src; };
+
+          lua_format =
+            pkgs.runCommandNoCC "lua_format"
+              {
+                src = pkgs.lib.fileset.toSource {
+                  root = ./.;
+                  fileset = pkgs.lib.fileset.unions [
+                    ./stylua.toml
+                    (pkgs.lib.fileset.fromSource (pkgs.lib.sources.sourceFilesBySuffices ./. [ ".lua" ]))
+                  ];
+                };
+
+                nativeBuildInputs = with pkgs; [
+                  stylua
+                ];
+              }
+              ''
+                find $src -type f -iname "*.lua" | xargs stylua --check --verify
+                touch $out
+              '';
         };
         devShells.default = craneLib.devShell {
+          checks = self.checks.${system};
+
+          packages = with pkgs; [
+            rust-analyzer
+          ];
+
+          # fixes: the cargo feature `public-dependency` requires a nightly
+          # version of Cargo, but this is the `stable` channel
+          #
+          # This enables unstable features with the stable compiler
+          # Remove once this is fixed in stable
+          #
+          # https://github.com/rust-lang/rust/issues/112391
+          # https://github.com/rust-lang/rust-analyzer/issues/15046
+          RUSTC_BOOTSTRAP = 1;
+        };
+        devShells.windowsX64 = crossCompileForWindowsX64.craneLib.devShell {
           checks = self.checks.${system};
 
           packages = with pkgs; [

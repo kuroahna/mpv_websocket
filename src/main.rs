@@ -19,8 +19,7 @@ struct Args {
     websocket_server_port: u16,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let args = Args::parse();
 
     println!(
@@ -37,9 +36,5 @@ async fn main() {
         "Connecting to mpv socket at `{}`",
         args.mpvsocket_path.display()
     );
-    mpv::Client::new(args.mpvsocket_path)
-        .connect()
-        .await
-        .poll_and_send_messages_to_server(server)
-        .await;
+    mpv::Client::new(args.mpvsocket_path).poll_and_send_messages_to_server(server);
 }
