@@ -212,6 +212,26 @@
           };
 
           deny = craneLib.cargoDeny { inherit src; };
+
+          lua_format =
+            pkgs.runCommandNoCC "lua_format"
+              {
+                src = pkgs.lib.fileset.toSource {
+                  root = ./.;
+                  fileset = pkgs.lib.fileset.unions [
+                    ./stylua.toml
+                    (pkgs.lib.fileset.fromSource (pkgs.lib.sources.sourceFilesBySuffices ./. [ ".lua" ]))
+                  ];
+                };
+
+                nativeBuildInputs = with pkgs; [
+                  stylua
+                ];
+              }
+              ''
+                find $src -type f -iname "*.lua" | xargs stylua --check --verify
+                touch $out
+              '';
         };
         devShells.default = craneLib.devShell {
           checks = self.checks.${system};
