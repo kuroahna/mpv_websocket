@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-02-10
+
 ### Changed
 
+- Get mpv socket location from the mpv config file instead of hardcoding it.
 - Replace unmaintained parity-tokio-ipc dependency with mio.
 
 ## [0.3.0] - 2025-02-09
