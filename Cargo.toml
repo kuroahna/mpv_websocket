@@ -23,23 +23,16 @@ mio = { version = "1.0.3", default-features = false, features = [
   "os-poll",
   "net",
 ] }
-# TODO: Replace parity-tokio-ipc which is now unmaintained
-parity-tokio-ipc = "0.9.0"
 serde = { version = "1.0.217", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.138", default-features = false, features = [
   "std",
-] }
-tokio = { version = "1.43.0", default-features = false, features = [
-  "macros",
-  "rt-multi-thread",
-  "io-util",
 ] }
 tungstenite = { version = "0.26.1", default-features = false, features = [
   "handshake",
 ] }
 
 [target.'cfg(windows)'.dependencies]
-# Fix unresolved winerror import caused by parity-tokio-ipc
-#
-# https://github.com/paritytech/parity-tokio-ipc/pull/40
-winapi = { version = "0.3.9", features = ["winerror"] }
+mio = { version = "1.0.3", default-features = false, features = ["os-ext"] }
+windows-sys = { version = "0.59.0", default-features = false, features = [
+  "Win32_Storage_FileSystem",
+] }
