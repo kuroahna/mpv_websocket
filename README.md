@@ -62,7 +62,7 @@ Pre-compiled binaries are available in the
 2. Copy [mpv.conf](mpv/mpv.conf) into your
    [%appdata%\mpv](https://mpv.io/manual/stable/#files-on-windows) folder
 3. Copy
-   [run_websocket_server_windows.lua](mpv/scripts/run_websocket_server_windows.lua)
+   [run_websocket_server.lua](mpv/scripts/run_websocket_server.lua)
    into your
    [%appdata%\mpv\scripts](https://mpv.io/manual/stable/#files-on-windows)
    folder. Create the folder if it does not already exist
@@ -74,7 +74,7 @@ Pre-compiled binaries are available in the
 ├── mpv.conf
 ├── mpv_websocket.exe
 └── scripts
-    └── run_websocket_server_windows.lua
+    └── run_websocket_server.lua
 ```
 
 </details>
@@ -88,7 +88,7 @@ Pre-compiled binaries are available in the
 2. Copy [mpv.conf](mpv/mpv.conf) into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
 3. Copy
-   [run_websocket_server_linux.lua](mpv/scripts/run_websocket_server_linux.lua)
+   [run_websocket_server.lua](mpv/scripts/run_websocket_server.lua)
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
    Create the folder if it does not already exist
@@ -100,7 +100,7 @@ Pre-compiled binaries are available in the
 ├── mpv.conf
 ├── mpv_websocket
 └── scripts
-    └── run_websocket_server_linux.lua
+    └── run_websocket_server.lua
 ```
 
 </details>
@@ -122,7 +122,7 @@ Pre-compiled binaries are available in the
 2. Copy [mpv.conf](mpv/mpv.conf) into your
    [~/.config/mpv](https://mpv.io/manual/stable/#files) folder
 3. Copy
-   [run_websocket_server_linux.lua](mpv/scripts/run_websocket_server_linux.lua)
+   [run_websocket_server.lua](mpv/scripts/run_websocket_server.lua)
    into your
    [~/.config/mpv/scripts](https://mpv.io/manual/stable/#files) folder.
    Create the folder if it does not already exist
@@ -134,7 +134,7 @@ Pre-compiled binaries are available in the
 ├── mpv.conf
 ├── mpv_websocket
 └── scripts
-    └── run_websocket_server_linux.lua
+    └── run_websocket_server.lua
 ```
 
 </details>
