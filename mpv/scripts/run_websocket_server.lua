@@ -3,16 +3,12 @@
 
 local utils = require("mp.utils")
 
-local platform
-if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
-  platform = 'windows'
-else
-  platform = 'linux'
-end
+local platform = mp.get_property_native("platform")
 
 local config_file_path = mp.find_config_file("mpv.conf")
 local config_folder_path, config_file = utils.split_path(config_file_path)
-local mpv_websocket_path = utils.join_path(config_folder_path, platform == "windows" and "mpv_websocket.exe" or "mpv_websocket")
+local mpv_websocket_path =
+  utils.join_path(config_folder_path, platform == "windows" and "mpv_websocket.exe" or "mpv_websocket")
 local initialised_websocket
 
 local _, err = utils.file_info(config_file_path)
@@ -48,6 +44,11 @@ local function find_mpv_socket(config_file_path)
   return mpv_socket
 end
 
+local mpv_socket = find_mpv_socket(config_file_path)
+if platform == "windows" then
+  mpv_socket = "\\\\.\\pipe" .. mpv_socket:gsub("/", "\\")
+end
+
 local function start_websocket()
   initialised_websocket = mp.command_native_async({
     name = "subprocess",
@@ -57,7 +58,7 @@ local function start_websocket()
     args = {
       mpv_websocket_path,
       "-m",
-      platform == "windows" and "\\\\.\\pipe" .. find_mpv_socket(config_file_path):gsub("/", "\\") or find_mpv_socket(config_file_path),
+      mpv_socket,
       "-w",
       "6677",
     },
