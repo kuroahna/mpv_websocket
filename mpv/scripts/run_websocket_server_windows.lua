@@ -1,7 +1,6 @@
 -- mpv_websocket
 -- https://github.com/kuroahna/mpv_websocket
 
-local msg = require("mp.msg")
 local utils = require("mp.utils")
 
 local config_file_path = mp.find_config_file("mpv.conf")
@@ -9,38 +8,37 @@ local config_folder_path, config_file = utils.split_path(config_file_path)
 local mpv_websocket_path = utils.join_path(config_folder_path, "mpv_websocket.exe")
 local initialised_websocket
 
-local function find_mpv_socket(conffile)
-  local f = conffile and io.open(conffile, "r")
-  if f == nil then
-    -- config not found
-    msg.debug(conffile .. " not found.")
-  else
-    for line in f:lines() do
-      if line:sub(#line) == "\r" then
-        line = line:sub(1, #line - 1)
-      end
-      if string.find(line, "#") ~= 1 then
-        local eqpos = string.find(line, "=")
-        if eqpos ~= nil then
-          local key = string.sub(line, 1, eqpos - 1)
-          local val = string.sub(line, eqpos + 1)
+local _, err = utils.file_info(config_file_path)
+if err then
+  error("failed to open mpv config file `" .. config_file_path .. "`")
+end
 
-          if key == "input-ipc-server" then
-            local percentpos = string.find(val, "%%", 2)
-            if percentpos ~= nil then
-              val = string.sub(val, percentpos + 1)
-            end
-            msg.debug("found mpv input socket at " .. val)
+local _, err = utils.file_info(mpv_websocket_path)
+if err then
+  error("failed to open mpv_websocket")
+end
 
-            return val
-          end
-        end
-      end
-    end
-    io.close(f)
+local function find_mpv_socket(config_file_path)
+  local file = io.open(config_file_path, "r")
+  if file == nil then
+    error("failed to read mpv config file `" .. config_file_path .. "`")
   end
-  -- fallback to old, hardcoded location
-  return "/tmp/mpv-socket"
+
+  local mpv_socket
+  for line in file:lines() do
+    mpv_socket = line:match("^input%-ipc%-server%s*=%s*(%g+)%s*")
+    if mpv_socket then
+      break
+    end
+  end
+
+  file:close()
+
+  if not mpv_socket then
+    error("input-ipc-server option does not exist in `" .. config_file_path .. "`")
+  end
+
+  return mpv_socket
 end
 
 local function start_websocket()
