@@ -8,6 +8,39 @@ local config_folder_path, config_file = utils.split_path(config_file_path)
 local mpv_websocket_path = utils.join_path(config_folder_path, "mpv_websocket.exe")
 local initialised_websocket
 
+local _, err = utils.file_info(config_file_path)
+if err then
+  error("failed to open mpv config file `" .. config_file_path .. "`")
+end
+
+local _, err = utils.file_info(mpv_websocket_path)
+if err then
+  error("failed to open mpv_websocket")
+end
+
+local function find_mpv_socket(config_file_path)
+  local file = io.open(config_file_path, "r")
+  if file == nil then
+    error("failed to read mpv config file `" .. config_file_path .. "`")
+  end
+
+  local mpv_socket
+  for line in file:lines() do
+    mpv_socket = line:match("^input%-ipc%-server%s*=%s*(%g+)%s*")
+    if mpv_socket then
+      break
+    end
+  end
+
+  file:close()
+
+  if not mpv_socket then
+    error("input-ipc-server option does not exist in `" .. config_file_path .. "`")
+  end
+
+  return mpv_socket
+end
+
 local function start_websocket()
   initialised_websocket = mp.command_native_async({
     name = "subprocess",
@@ -17,7 +50,7 @@ local function start_websocket()
     args = {
       mpv_websocket_path,
       "-m",
-      "\\\\.\\pipe\\tmp\\mpv-socket",
+      "\\\\.\\pipe" .. find_mpv_socket(config_file_path):gsub("/", "\\"),
       "-w",
       "6677",
     },
