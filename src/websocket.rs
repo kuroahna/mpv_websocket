@@ -194,6 +194,22 @@ struct ConnectedState {
 }
 
 impl ConnectedState {
+    fn transition_to_closed(&mut self) -> Result<Option<WebSocketState>, WebSocketError> {
+        let state = std::mem::replace(
+            self,
+            ConnectedState {
+                websocket: WebSocket::from_raw_socket(
+                    Box::new(EmptyStream),
+                    Role::Server,
+                    None,
+                ),
+                messages: VecDeque::new(),
+                write: WriteState::Unwritable,
+            },
+        );
+        Ok(Some(WebSocketState::Closed(state.websocket)))
+    }
+
     fn next_state(
         &mut self,
         message: WebSocketMessage,
@@ -206,24 +222,16 @@ impl ConnectedState {
                 match self.websocket.read() {
                     Ok(msg) => msg,
                     Err(e) => match e {
-                        tungstenite::Error::ConnectionClosed => {
-                            let state = std::mem::replace(
-                                self,
-                                ConnectedState {
-                                    websocket: WebSocket::from_raw_socket(
-                                        Box::new(EmptyStream),
-                                        Role::Server,
-                                        None,
-                                    ),
-                                    messages: VecDeque::new(),
-                                    write: WriteState::Unwritable,
-                                },
-                            );
-                            return Ok(Some(WebSocketState::Closed(state.websocket)));
+                        tungstenite::Error::ConnectionClosed
+                        | tungstenite::Error::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
+                                                       | tungstenite::error::ProtocolError::InvalidCloseSequence 
+                                                       | tungstenite::error::ProtocolError::UnmaskedFrameFromClient) => {
+                            return self.transition_to_closed();
                         }
                         tungstenite::Error::Io(ref error) => match error.kind() {
                             io::ErrorKind::WouldBlock => return Ok(None),
                             io::ErrorKind::Interrupted => continue,
+                            io::ErrorKind::ConnectionReset => return self.transition_to_closed(),
                             _ => return Err(From::from(e)),
                         },
                         _ => return Err(From::from(e)),
@@ -261,20 +269,11 @@ impl ConnectedState {
                 .send(tungstenite::Message::Text((*msg).into()))
             {
                 match e {
-                    tungstenite::Error::ConnectionClosed => {
-                        let state = std::mem::replace(
-                            self,
-                            ConnectedState {
-                                websocket: WebSocket::from_raw_socket(
-                                    Box::new(EmptyStream),
-                                    Role::Server,
-                                    None,
-                                ),
-                                messages: VecDeque::new(),
-                                write: WriteState::Unwritable,
-                            },
-                        );
-                        return Ok(Some(WebSocketState::Closed(state.websocket)));
+                    tungstenite::Error::ConnectionClosed
+                    | tungstenite::Error::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
+                                                   | tungstenite::error::ProtocolError::InvalidCloseSequence
+                                                   | tungstenite::error::ProtocolError::UnmaskedFrameFromClient) => {
+                        return self.transition_to_closed();
                     }
                     tungstenite::Error::Io(ref err) => match err.kind() {
                         // On write error, tungstenite will store the frame in
@@ -283,6 +282,7 @@ impl ConnectedState {
                         // message back into our buffer here
                         io::ErrorKind::WouldBlock => self.write = WriteState::Unwritable,
                         io::ErrorKind::Interrupted => {}
+                        io::ErrorKind::ConnectionReset => return self.transition_to_closed(),
                         _ => return Err(From::from(e)),
                     },
                     _ => return Err(From::from(e)),
