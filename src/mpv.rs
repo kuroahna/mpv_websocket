@@ -203,11 +203,7 @@ impl ConnectedState {
                             continue;
                         }
                     };
-
-                    if event.data.is_empty() {
-                        continue;
-                    }
-
+                    
                     let data: Arc<str> = event.data.into();
                     self.sender.send(data.clone()).unwrap_or_else(|e| {
                         panic!(
