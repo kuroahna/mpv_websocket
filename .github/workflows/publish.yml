@@ -35,39 +35,60 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@v16
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
 
-    - name: Run the Magic Nix Cache
-      uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Run the Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v8
 
-    - name: Build binary
-      run: |
-        if [ -z "${{ matrix.nix_target }}" ]; then
-          nix build --print-build-logs .
-        else
-          nix build --print-build-logs .#${{ matrix.nix_target }}
-        fi
+      - name: Build binary
+        run: |
+          if [ -z "${{ matrix.nix_target }}" ]; then
+            nix build --print-build-logs .
+          else
+            nix build --print-build-logs .#${{ matrix.nix_target }}
+          fi
 
-    - name: Package binary to zip
-      run: |
-        mkdir release
-        cp result/bin/${{ matrix.binary_name }} release/
-        cd release
-        zip ../${{ matrix.zip_name }} ${{ matrix.binary_name }}
+      - name: Package binary to zip
+        run: |
+          mkdir release
+          cp result/bin/${{ matrix.binary_name }} release/
+          cd release
+          zip ../${{ matrix.zip_name }} ${{ matrix.binary_name }}
 
-    - name: Upload artifact zip
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.zip_name }}
-        path: ${{ matrix.zip_name }}
+      - name: Upload artifact zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.zip_name }}
+          path: ${{ matrix.zip_name }}
 
-    - name: Publish ZIP to GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ${{ matrix.zip_name }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish ZIP to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.zip_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload_mpv_dir:
+    name: Upload mpv directory
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Zip mpv/ directory
+        run: |
+          cd mpv
+          zip -r ../mpv.zip .
+
+      - name: Publish mpv.zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mpv.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
