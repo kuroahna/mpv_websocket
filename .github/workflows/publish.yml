@@ -61,7 +61,7 @@ jobs:
         zip ../${{ matrix.zip_name }} ${{ matrix.binary_name }}
 
     - name: Upload artifact zip
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.zip_name }}
         path: ${{ matrix.zip_name }}
