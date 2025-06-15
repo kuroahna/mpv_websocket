@@ -218,7 +218,7 @@
                   pkgsCross.mingwW64.stdenv.cc
                 ];
                 buildInputs = with pkgs; [
-                  pkgsCross.mingw64.windows.mingw_w64_pthreads
+                  pkgsCross.mingwW64.windows.mingw_w64_pthreads
                 ];
 
                 preBuild = fixLinkErrors;
@@ -242,7 +242,7 @@
                   wine64
                 ];
                 buildInputs = with pkgs; [
-                  pkgsCross.mingw64.windows.mingw_w64_pthreads
+                  pkgsCross.mingwW64.windows.mingw_w64_pthreads
                 ];
 
                 preConfigure = ''
