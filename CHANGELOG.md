@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Send sub-text even if it is empty.
+* Avoid crashing when WebSocket client closes abruptly.
 
 ## [0.4.1] - 2025-02-10
 

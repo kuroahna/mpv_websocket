@@ -27,12 +27,15 @@ serde = { version = "1.0.217", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.138", default-features = false, features = [
   "std",
 ] }
-tungstenite = { version = "0.26.1", default-features = false, features = [
+tracing = "0.1.41"
+tracing-appender = "0.2"
+tracing-subscriber = "0.3.19"
+tungstenite = { version = "0.27.0", default-features = false, features = [
   "handshake",
 ] }
 
 [target.'cfg(windows)'.dependencies]
 mio = { version = "1.0.3", default-features = false, features = ["os-ext"] }
-windows-sys = { version = "0.59.0", default-features = false, features = [
+windows-sys = { version = "0.60.2", default-features = false, features = [
   "Win32_Storage_FileSystem",
 ] }

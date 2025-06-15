@@ -29,7 +29,11 @@ impl<T> SyncSender<T> {
     pub fn send(&self, t: T) -> Result<(), mpsc::SendError<T>> {
         self.tx.send(t)?;
 
-        if let Some(waker) = &*self.waker.lock().unwrap_or_else(|e| e.into_inner()) {
+        if let Some(waker) = &*self
+            .waker
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
             waker.wake().expect("unable to wake");
         }
 
@@ -55,7 +59,10 @@ impl<T> Source for Receiver<T> {
         token: Token,
         _: mio::Interest,
     ) -> io::Result<()> {
-        let mut waker = self.waker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut waker = self
+            .waker
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         if waker.is_none() {
             *waker = Some(Waker::new(registry, token)?);
         }
@@ -74,7 +81,10 @@ impl<T> Source for Receiver<T> {
     }
 
     fn deregister(&mut self, _: &mio::Registry) -> io::Result<()> {
-        let mut waker = self.waker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut waker = self
+            .waker
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         *waker = None;
         Ok(())
     }

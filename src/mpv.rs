@@ -22,7 +22,7 @@ const CLIENT: Token = Token(0);
 const BROADCAST: Token = Token(CLIENT.0 + 1);
 
 #[cfg(windows)]
-fn create_named_pipe<P: AsRef<Path>>(path: P) -> Result<NamedPipe, std::io::Error> {
+fn create_named_pipe<P: AsRef<Path>>(path: P) -> Result<NamedPipe, io::Error> {
     use std::fs::OpenOptions;
     use std::os::windows::fs::OpenOptionsExt;
     use std::os::windows::io::{FromRawHandle, IntoRawHandle};
@@ -52,44 +52,44 @@ struct EmptyStream;
 impl Stream for EmptyStream {}
 
 impl Read for EmptyStream {
-    fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
         Ok(0)
     }
 }
 
 impl Write for EmptyStream {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl Source for EmptyStream {
-    fn register(&mut self, _: &mio::Registry, _: Token, _: Interest) -> std::io::Result<()> {
+    fn register(&mut self, _: &mio::Registry, _: Token, _: Interest) -> io::Result<()> {
         Ok(())
     }
 
-    fn reregister(&mut self, _: &mio::Registry, _: Token, _: Interest) -> std::io::Result<()> {
+    fn reregister(&mut self, _: &mio::Registry, _: Token, _: Interest) -> io::Result<()> {
         Ok(())
     }
 
-    fn deregister(&mut self, _: &mio::Registry) -> std::io::Result<()> {
+    fn deregister(&mut self, _: &mio::Registry) -> io::Result<()> {
         Ok(())
     }
 }
 
 #[derive(Debug)]
 enum SocketError {
-    Io(std::io::Error),
+    Io(io::Error),
 }
 
 impl Display for SocketError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SocketError::Io(error) => write!(f, "IO error: {}", error),
+            SocketError::Io(error) => write!(f, "IO error: {error}"),
         }
     }
 }
@@ -102,8 +102,8 @@ impl Error for SocketError {
     }
 }
 
-impl From<std::io::Error> for SocketError {
-    fn from(value: std::io::Error) -> Self {
+impl From<io::Error> for SocketError {
+    fn from(value: io::Error) -> Self {
         Self::Io(value)
     }
 }
@@ -206,10 +206,7 @@ impl ConnectedState {
 
                     let data: Arc<str> = event.data.into();
                     self.sender.send(data.clone()).unwrap_or_else(|e| {
-                        panic!(
-                            "failed to send text `{}` to WebSocket clients: {:?}",
-                            data, e
-                        )
+                        panic!("failed to send text `{data}` to WebSocket clients: {e:?}")
                     });
                 }
 
@@ -315,7 +312,7 @@ impl Client {
         let (sender, mut receiver) = mio_channel::sync_channel::<Arc<str>>(10);
 
         let mut poll =
-            Poll::new().unwrap_or_else(|e| panic!("failed to create poll instance: {:?}", e));
+            Poll::new().unwrap_or_else(|e| panic!("failed to create poll instance: {e:?}"));
         let mut events = Events::with_capacity(128);
 
         #[cfg(unix)]
@@ -353,16 +350,11 @@ impl Client {
                 CLIENT,
                 Interest::READABLE.add(Interest::WRITABLE),
             )
-            .unwrap_or_else(|e| {
-                panic!("failed to register socket client to poll instance: {:?}", e)
-            });
+            .unwrap_or_else(|e| panic!("failed to register socket client to poll instance: {e:?}"));
         poll.registry()
             .register(&mut receiver, BROADCAST, Interest::READABLE)
             .unwrap_or_else(|e| {
-                panic!(
-                    "failed to register broadcast channel to poll instance: {:?}",
-                    e
-                )
+                panic!("failed to register broadcast channel to poll instance: {e:?}")
             });
 
         let mut state = SocketState::Connected(ConnectedState {
@@ -377,28 +369,28 @@ impl Client {
                     .expect("observe property sub-text command should be a valid UTF-8 string")
                     .into(),
             ))
-            .unwrap_or_else(|e| panic!("message should not have been sent yet: {:?}", e));
+            .unwrap_or_else(|e| panic!("message should not have been sent yet: {e:?}"));
 
         loop {
             if let Err(e) = poll.poll(&mut events, None) {
                 if e.kind() == io::ErrorKind::Interrupted {
                     continue;
                 }
-                panic!("failed to poll for events: {:?}", e);
+                panic!("failed to poll for events: {e:?}");
             }
 
-            for event in events.iter() {
+            for event in &events {
                 match event.token() {
                     CLIENT => {
                         if event.is_readable() {
                             state
                                 .next_state(SocketMessage::MessagesAvailable)
                                 .unwrap_or_else(|e| {
-                                    panic!("failed to read messages on socket: {:?}", e)
+                                    panic!("failed to read messages on socket: {e:?}")
                                 });
                             if let SocketState::Closed(mut stream) = state {
                                 poll.registry().deregister(&mut stream).unwrap_or_else(|e| {
-                                    panic!("failed to deregister stream: {:?}", e)
+                                    panic!("failed to deregister stream: {e:?}")
                                 });
                                 return;
                             }
@@ -408,11 +400,11 @@ impl Client {
                             state
                                 .next_state(SocketMessage::CanWrite)
                                 .unwrap_or_else(|e| {
-                                    panic!("failed to handle writable event on socket: {:?}", e)
+                                    panic!("failed to handle writable event on socket: {e:?}")
                                 });
                             if let SocketState::Closed(mut stream) = state {
                                 poll.registry().deregister(&mut stream).unwrap_or_else(|e| {
-                                    panic!("failed to deregister stream: {:?}", e)
+                                    panic!("failed to deregister stream: {e:?}")
                                 });
                                 return;
                             }
