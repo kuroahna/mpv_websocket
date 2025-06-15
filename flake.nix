@@ -133,7 +133,6 @@
               // {
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
-                  pkgsCross.mingwW64.binutils
                 ];
                 buildInputs = with pkgs; [
                   pkgsCross.mingwW64.windows.mingw_w64_pthreads
@@ -157,7 +156,6 @@
                 inherit cargoArtifacts;
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
-                  pkgsCross.mingwW64.binutils
                   wine64
                 ];
                 buildInputs = with pkgs; [
@@ -184,98 +182,12 @@
             mpv_websocket = mpv_websocket;
             targetTriple = targetTriple;
           };
-
-        crossCompileForWindowsX86 =
-          let
-            targetTriple = "i686-pc-windows-gnu";
-
-            # Hack required to fix link errors with pthreads on stable 1.84.0
-            # This does not seem to be required on nightly 1.86.0
-            #
-            # https://github.com/nix-community/naersk/issues/181#issuecomment-874352470
-            fixLinkErrors = ''
-              export CARGO_TARGET_I686_PC_WINDOWS_GNU_RUSTFLAGS="-C link-args=''$(echo $NIX_LDFLAGS | tr ' ' '\n' | grep -- '^-L' | tr '\n' ' ')"
-              export NIX_LDFLAGS=
-            '';
-
-            toolchain =
-              p:
-              p.rust-bin.stable.latest.default.override {
-                targets = [ targetTriple ];
-              };
-
-            craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
-
-            src = craneLib.cleanCargoSource ./.;
-
-            commonArgs = {
-              inherit src;
-              strictDeps = true;
-            };
-
-            cargoArtifacts = craneLib.buildDepsOnly (
-              commonArgs
-              // {
-                nativeBuildInputs = with pkgs; [
-                  pkgsCross.mingwW64.stdenv.cc
-                  pkgsCross.mingwW64.binutils
-                ];
-                buildInputs = with pkgs; [
-                  pkgsCross.mingwW64.windows.mingw_w64_pthreads
-                ];
-
-                preBuild = fixLinkErrors;
-
-                buildPhaseCargoCommand = ''
-                  cargo check --profile release --frozen --target ${targetTriple}
-                  cargo build --profile release --frozen --target ${targetTriple} --workspace
-                '';
-                checkPhaseCargoCommand = ''
-                  cargo test --profile release --frozen --target ${targetTriple} --workspace --no-run
-                '';
-              }
-            );
-
-            mpv_websocket = craneLib.buildPackage (
-              commonArgs
-              // {
-                inherit cargoArtifacts;
-                nativeBuildInputs = with pkgs; [
-                  pkgsCross.mingwW64.stdenv.cc
-                  pkgsCross.mingwW64.binutils
-                  wine64
-                ];
-                buildInputs = with pkgs; [
-                  pkgsCross.mingwW64.windows.mingw_w64_pthreads
-                ];
-
-                preConfigure = ''
-                  # Required for wine
-                  export HOME=$(mktemp --directory)
-                '';
-
-                preBuild = fixLinkErrors;
-
-                cargoExtraArgs = "--frozen --target ${targetTriple} --workspace";
-                CARGO_TARGET_I686_PC_WINDOWS_GNU_RUNNER = "wine64";
-              }
-            );
-          in
-          {
-            src = src;
-            commonArgs = commonArgs;
-            craneLib = craneLib;
-            cargoArtifacts = cargoArtifacts;
-            mpv_websocket = mpv_websocket;
-            targetTriple = targetTriple;
-          };
       in
       {
         formatter = pkgs.nixfmt-rfc-style;
         packages.default = mpv_websocket;
         packages.linuxMuslX64 = crossCompileForLinuxMuslX64.mpv_websocket;
         packages.windowsX64 = crossCompileForWindowsX64.mpv_websocket;
-        packages.windowsX86 = crossCompileForWindowsX86.mpv_websocket;
         checks = {
           inherit mpv_websocket;
 
