@@ -133,6 +133,7 @@
               // {
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
+                  pkgsCross.mingwW64.binutils
                 ];
                 buildInputs = with pkgs; [
                   pkgsCross.mingwW64.windows.mingw_w64_pthreads
@@ -156,6 +157,7 @@
                 inherit cargoArtifacts;
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
+                  pkgsCross.mingwW64.binutils
                   wine64
                 ];
                 buildInputs = with pkgs; [
@@ -216,6 +218,7 @@
               // {
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
+                  pkgsCross.mingwW64.binutils
                 ];
                 buildInputs = with pkgs; [
                   pkgsCross.mingwW64.windows.mingw_w64_pthreads
@@ -239,6 +242,7 @@
                 inherit cargoArtifacts;
                 nativeBuildInputs = with pkgs; [
                   pkgsCross.mingwW64.stdenv.cc
+                  pkgsCross.mingwW64.binutils
                   wine64
                 ];
                 buildInputs = with pkgs; [
