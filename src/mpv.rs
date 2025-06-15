@@ -206,9 +206,7 @@ impl ConnectedState {
 
                     let data: Arc<str> = event.data.into();
                     self.sender.send(data.clone()).unwrap_or_else(|e| {
-                        panic!(
-                            "failed to send text `{data}` to WebSocket clients: {e:?}"
-                        )
+                        panic!("failed to send text `{data}` to WebSocket clients: {e:?}")
                     });
                 }
 
@@ -352,15 +350,11 @@ impl Client {
                 CLIENT,
                 Interest::READABLE.add(Interest::WRITABLE),
             )
-            .unwrap_or_else(|e| {
-                panic!("failed to register socket client to poll instance: {e:?}")
-            });
+            .unwrap_or_else(|e| panic!("failed to register socket client to poll instance: {e:?}"));
         poll.registry()
             .register(&mut receiver, BROADCAST, Interest::READABLE)
             .unwrap_or_else(|e| {
-                panic!(
-                    "failed to register broadcast channel to poll instance: {e:?}"
-                )
+                panic!("failed to register broadcast channel to poll instance: {e:?}")
             });
 
         let mut state = SocketState::Connected(ConnectedState {

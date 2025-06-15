@@ -156,8 +156,8 @@ impl WebSocketState {
                 }
             }
             WebSocketState::Closed(_) => {
-                // This can happen if multiple events are processed for a closed socket.
-                // It's safe to ignore them.
+                eprintln!("WebSocket is already closed");
+                warn!("WebSocket is already closed");
             }
         }
 
@@ -352,9 +352,7 @@ impl Server {
         poll.registry()
             .register(&mut receiver, BROADCAST, Interest::READABLE)
             .unwrap_or_else(|e| {
-                panic!(
-                    "failed to register broadcast channel to poll instance: {e:?}"
-                )
+                panic!("failed to register broadcast channel to poll instance: {e:?}")
             });
 
         thread::spawn(move || {
@@ -384,8 +382,6 @@ impl Server {
                                         break;
                                     }
                                     Err(e) => {
-                                        // This is a server-wide error, not a client error.
-                                        // Panicking is acceptable as per the requirements.
                                         panic!("failed to accept connection: {e:?}");
                                     }
                                 };
@@ -450,8 +446,7 @@ impl Server {
                         token => {
                             if event.is_readable() {
                                 if let Some(stream) = token_to_tcpstreams.remove(&token) {
-                                    let mut state =
-                                        WebSocketState::Unconnected(UnconnectedState);
+                                    let mut state = WebSocketState::Unconnected(UnconnectedState);
                                     if let Err(e) = state.next_state(
                                         WebSocketMessage::UpgradeWebSocket(Box::new(stream)),
                                     ) {
@@ -472,11 +467,13 @@ impl Server {
                                     }
 
                                     if let WebSocketState::Closed(mut stream) = state {
-                                        if let Err(e) =
-                                            poll.registry().deregister(stream.get_mut())
+                                        if let Err(e) = poll.registry().deregister(stream.get_mut())
                                         {
                                             eprintln!("failed to deregister stream for token {token:?}: {e:?}");
-                                            warn!("failed to deregister stream for token {:?}: {:?}", token, e);
+                                            warn!(
+                                                "failed to deregister stream for token {:?}: {:?}",
+                                                token, e
+                                            );
                                         }
                                     } else {
                                         token_to_websockets.insert(token, state);
@@ -484,8 +481,8 @@ impl Server {
                                 } else {
                                     let mut needs_removal = false;
                                     if let Some(state) = token_to_websockets.get_mut(&token) {
-                                        if let Err(e) = state
-                                            .next_state(WebSocketMessage::MessagesAvailable)
+                                        if let Err(e) =
+                                            state.next_state(WebSocketMessage::MessagesAvailable)
                                         {
                                             eprintln!("failed to read messages on WebSocket with token {token:?}: {e:?}");
                                             warn!("failed to read messages on WebSocket with token {:?}: {:?}", token, e);
@@ -552,9 +549,7 @@ impl Server {
 impl ServerStarted {
     pub fn send_message(&self, message: Arc<str>) {
         self.sender.send(message.clone()).unwrap_or_else(|e| {
-            panic!(
-                "failed to send text `{message}` to WebSocket clients: {e:?}"
-            )
+            panic!("failed to send text `{message}` to WebSocket clients: {e:?}")
         });
     }
 }
