@@ -9,33 +9,33 @@ jobs:
     name: Build and Publish ${{ matrix.kind }}
     strategy:
       matrix:
-        kind: ['linuxmuslx64', 'windowsx64', 'macosx64', 'macosaarch64']
+        kind: ['linuxmuslx64', 'windowsx64', 'windowsx86', 'macosx64', 'macosaarch64']
         include:
           - kind: linuxmuslx64
             runs_on: ubuntu-24.04
             nix_target: linuxMuslX64
             binary_name: mpv_websocket
-            zip_name: mpv_websocket-linux-musl-x64.zip
+            zip_name: x86_64-unknown-linux-musl.zip
           - kind: windowsx64
             runs_on: ubuntu-24.04
             nix_target: windowsX64
             binary_name: mpv_websocket.exe
-            zip_name: mpv_websocket-windows-x64.zip
+            zip_name: x86_64-pc-windows-gnu.zip
           - kind: windowsx86
             runs_on: ubuntu-24.04
             nix_target: windowsX86
             binary_name: mpv_websocket.exe
-            zip_name: mpv_websocket-windows-x86.zip
+            zip_name: x86-pc-windows-gnu.zip
           - kind: macosx64
             runs_on: macos-13
-            nix_target: macosX64
+            # no nix_target to use default flake target
             binary_name: mpv_websocket
-            zip_name: mpv_websocket-macos-x64.zip
+            zip_name: x86_64-apple-darwin.zip
           - kind: macosaarch64
             runs_on: macos-14
-            nix_target: macosaarch64
+            # no nix_target to use default flake target
             binary_name: mpv_websocket
-            zip_name: mpv_websocket-macos-aarch64.zip
+            zip_name: aarch64-apple-darwin.zip
 
     runs-on: ${{ matrix.runs_on }}
 
@@ -51,7 +51,11 @@ jobs:
 
     - name: Build binary
       run: |
-        nix build --print-build-logs .#${{ matrix.nix_target }}
+        if [ -z "${{ matrix.nix_target }}" ]; then
+          nix build --print-build-logs .
+        else
+          nix build --print-build-logs .#${{ matrix.nix_target }}
+        fi
 
     - name: Package binary to zip
       run: |
