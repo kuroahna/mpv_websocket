@@ -8,6 +8,7 @@ use std::io::{self, Read, Write};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::thread;
+use tracing::warn;
 use tungstenite::protocol::Role;
 use tungstenite::WebSocket;
 
@@ -35,38 +36,38 @@ struct EmptyStream;
 impl Stream for EmptyStream {}
 
 impl Read for EmptyStream {
-    fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
         Ok(0)
     }
 }
 
 impl Write for EmptyStream {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl Source for EmptyStream {
-    fn register(&mut self, _: &mio::Registry, _: Token, _: Interest) -> std::io::Result<()> {
+    fn register(&mut self, _: &mio::Registry, _: Token, _: Interest) -> io::Result<()> {
         Ok(())
     }
 
-    fn reregister(&mut self, _: &mio::Registry, _: Token, _: Interest) -> std::io::Result<()> {
+    fn reregister(&mut self, _: &mio::Registry, _: Token, _: Interest) -> io::Result<()> {
         Ok(())
     }
 
-    fn deregister(&mut self, _: &mio::Registry) -> std::io::Result<()> {
+    fn deregister(&mut self, _: &mio::Registry) -> io::Result<()> {
         Ok(())
     }
 }
 
 #[derive(Debug)]
 enum WebSocketError {
-    Io(std::io::Error),
+    Io(io::Error),
     Handshake(
         tungstenite::HandshakeError<
             tungstenite::ServerHandshake<
@@ -81,9 +82,9 @@ enum WebSocketError {
 impl Display for WebSocketError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WebSocketError::Io(error) => write!(f, "IO error: {}", error),
-            WebSocketError::Handshake(error) => write!(f, "handshake error: {}", error),
-            WebSocketError::WebSocket(error) => write!(f, "WebSocket error: {}", error),
+            WebSocketError::Io(error) => write!(f, "IO error: {error}"),
+            WebSocketError::Handshake(error) => write!(f, "handshake error: {error}"),
+            WebSocketError::WebSocket(error) => write!(f, "WebSocket error: {error}"),
         }
     }
 }
@@ -98,8 +99,8 @@ impl Error for WebSocketError {
     }
 }
 
-impl From<std::io::Error> for WebSocketError {
-    fn from(value: std::io::Error) -> Self {
+impl From<io::Error> for WebSocketError {
+    fn from(value: io::Error) -> Self {
         Self::Io(value)
     }
 }
@@ -154,7 +155,10 @@ impl WebSocketState {
                     *self = state;
                 }
             }
-            WebSocketState::Closed(_) => panic!("WebSocket is already closed"),
+            WebSocketState::Closed(_) => {
+                // This can happen if multiple events are processed for a closed socket.
+                // It's safe to ignore them.
+            }
         }
 
         Ok(())
@@ -198,11 +202,7 @@ impl ConnectedState {
         let state = std::mem::replace(
             self,
             ConnectedState {
-                websocket: WebSocket::from_raw_socket(
-                    Box::new(EmptyStream),
-                    Role::Server,
-                    None,
-                ),
+                websocket: WebSocket::from_raw_socket(Box::new(EmptyStream), Role::Server, None),
                 messages: VecDeque::new(),
                 write: WriteState::Unwritable,
             },
@@ -223,18 +223,33 @@ impl ConnectedState {
                     Ok(msg) => msg,
                     Err(e) => match e {
                         tungstenite::Error::ConnectionClosed
-                        | tungstenite::Error::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
-                                                       | tungstenite::error::ProtocolError::InvalidCloseSequence 
-                                                       | tungstenite::error::ProtocolError::UnmaskedFrameFromClient) => {
+                        | tungstenite::Error::Protocol(
+                            tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
+                            | tungstenite::error::ProtocolError::InvalidCloseSequence
+                            | tungstenite::error::ProtocolError::UnmaskedFrameFromClient,
+                        ) => {
                             return self.transition_to_closed();
                         }
                         tungstenite::Error::Io(ref error) => match error.kind() {
                             io::ErrorKind::WouldBlock => return Ok(None),
                             io::ErrorKind::Interrupted => continue,
                             io::ErrorKind::ConnectionReset => return self.transition_to_closed(),
-                            _ => return Err(From::from(e)),
+                            _ => {
+                                eprintln!(
+                                    "unhandled websocket read io error, closing connection: {e}"
+                                );
+                                warn!(
+                                    "unhandled websocket read io error, closing connection: {}",
+                                    e
+                                );
+                                return self.transition_to_closed();
+                            }
                         },
-                        _ => return Err(From::from(e)),
+                        _ => {
+                            eprintln!("unhandled websocket read error, closing connection: {e}");
+                            warn!("unhandled websocket read error, closing connection: {}", e);
+                            return self.transition_to_closed();
+                        }
                     },
                 };
             },
@@ -270,9 +285,11 @@ impl ConnectedState {
             {
                 match e {
                     tungstenite::Error::ConnectionClosed
-                    | tungstenite::Error::Protocol(tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
-                                                   | tungstenite::error::ProtocolError::InvalidCloseSequence
-                                                   | tungstenite::error::ProtocolError::UnmaskedFrameFromClient) => {
+                    | tungstenite::Error::Protocol(
+                        tungstenite::error::ProtocolError::ResetWithoutClosingHandshake
+                        | tungstenite::error::ProtocolError::InvalidCloseSequence
+                        | tungstenite::error::ProtocolError::UnmaskedFrameFromClient,
+                    ) => {
                         return self.transition_to_closed();
                     }
                     tungstenite::Error::Io(ref err) => match err.kind() {
@@ -283,9 +300,22 @@ impl ConnectedState {
                         io::ErrorKind::WouldBlock => self.write = WriteState::Unwritable,
                         io::ErrorKind::Interrupted => {}
                         io::ErrorKind::ConnectionReset => return self.transition_to_closed(),
-                        _ => return Err(From::from(e)),
+                        _ => {
+                            eprintln!(
+                                "unhandled websocket write io error, closing connection: {e}"
+                            );
+                            warn!(
+                                "unhandled websocket write io error, closing connection: {}",
+                                e
+                            );
+                            return self.transition_to_closed();
+                        }
                     },
-                    _ => return Err(From::from(e)),
+                    _ => {
+                        eprintln!("unhandled websocket write error, closing connection: {e}");
+                        warn!("unhandled websocket write error, closing connection: {}", e);
+                        return self.transition_to_closed();
+                    }
                 }
             }
         }
@@ -310,7 +340,7 @@ impl Server {
     pub fn start(self) -> ServerStarted {
         let (sender, mut receiver) = mio_channel::sync_channel::<Arc<str>>(10);
         let mut poll =
-            Poll::new().unwrap_or_else(|e| panic!("failed to create poll instance: {:?}", e));
+            Poll::new().unwrap_or_else(|e| panic!("failed to create poll instance: {e:?}"));
         let mut events = Events::with_capacity(128);
 
         let mut server = TcpListener::bind(self.address)
@@ -318,13 +348,12 @@ impl Server {
 
         poll.registry()
             .register(&mut server, SERVER, Interest::READABLE)
-            .unwrap_or_else(|e| panic!("failed to register server to poll instance: {:?}", e));
+            .unwrap_or_else(|e| panic!("failed to register server to poll instance: {e:?}"));
         poll.registry()
             .register(&mut receiver, BROADCAST, Interest::READABLE)
             .unwrap_or_else(|e| {
                 panic!(
-                    "failed to register broadcast channel to poll instance: {:?}",
-                    e
+                    "failed to register broadcast channel to poll instance: {e:?}"
                 )
             });
 
@@ -338,10 +367,10 @@ impl Server {
                     if e.kind() == io::ErrorKind::Interrupted {
                         continue;
                     }
-                    panic!("failed to poll for events: {:?}", e);
+                    panic!("failed to poll for events: {e:?}");
                 }
 
-                for event in events.iter() {
+                for event in &events {
                     match event.token() {
                         SERVER => {
                             if !event.is_readable() {
@@ -355,24 +384,27 @@ impl Server {
                                         break;
                                     }
                                     Err(e) => {
-                                        panic!("failed to accept connection: {:?}", e);
+                                        // This is a server-wide error, not a client error.
+                                        // Panicking is acceptable as per the requirements.
+                                        panic!("failed to accept connection: {e:?}");
                                     }
                                 };
 
                                 unique_token = unique_token.next();
-                                poll.registry()
-                                    .register(
-                                        &mut stream,
-                                        unique_token,
-                                        Interest::READABLE.add(Interest::WRITABLE),
-                                    )
-                                    .unwrap_or_else(|e| {
-                                        panic!(
-                                            "failed to register incoming connection `{}` for \
-                                             events: {:?}",
-                                            address, e
-                                        )
-                                    });
+                                if let Err(e) = poll.registry().register(
+                                    &mut stream,
+                                    unique_token,
+                                    Interest::READABLE.add(Interest::WRITABLE),
+                                ) {
+                                    eprintln!(
+                                        "failed to register incoming connection `{address}` for events: {e:?}. Connection closed."
+                                    );
+                                    warn!(
+                                        "failed to register incoming connection `{}` for events: {:?}. Connection closed.",
+                                        address, e
+                                    );
+                                    continue;
+                                }
 
                                 token_to_tcpstreams.insert(unique_token, stream);
                             }
@@ -384,15 +416,13 @@ impl Server {
 
                             if let Ok(msg) = receiver.try_recv() {
                                 let mut closed_connection_tokens = Vec::new();
-                                for (token, state) in token_to_websockets.iter_mut() {
-                                    state
-                                        .next_state(WebSocketMessage::SendText(msg.clone()))
-                                        .unwrap_or_else(|e| {
-                                            panic!(
-                                                "failed to send text `{}` to WebSocket: {:?}",
-                                                msg, e
-                                            )
-                                        });
+                                for (token, state) in &mut token_to_websockets {
+                                    if let Err(e) =
+                                        state.next_state(WebSocketMessage::SendText(msg.clone()))
+                                    {
+                                        eprintln!("failed to send text `{msg}` to WebSocket with token {token:?}: {e:?}. Connection will be closed.");
+                                        warn!("failed to send text `{}` to WebSocket with token {:?}: {:?}. Connection will be closed.", msg, token, e);
+                                    }
                                     if let WebSocketState::Closed(_) = state {
                                         closed_connection_tokens.push(*token);
                                     }
@@ -405,97 +435,107 @@ impl Server {
                                     let WebSocketState::Closed(mut stream) = state else {
                                         panic!("all WebSocket connections should be closed");
                                     };
-                                    poll.registry().deregister(stream.get_mut()).unwrap_or_else(
-                                        |e| panic!("failed to deregister stream: {:?}", e),
-                                    );
+                                    if let Err(e) = poll.registry().deregister(stream.get_mut()) {
+                                        eprintln!(
+                                            "failed to deregister stream for token {token:?}: {e:?}"
+                                        );
+                                        warn!(
+                                            "failed to deregister stream for token {:?}: {:?}",
+                                            token, e
+                                        );
+                                    }
                                 }
                             }
                         }
                         token => {
                             if event.is_readable() {
-                                match token_to_tcpstreams.remove(&token) {
-                                    Some(stream) => {
-                                        let mut state =
-                                            WebSocketState::Unconnected(UnconnectedState);
-                                        state
-                                            .next_state(WebSocketMessage::UpgradeWebSocket(
-                                                Box::new(stream),
-                                            ))
-                                            .unwrap_or_else(|e| {
-                                                panic!(
-                                                    "failed to upgrade tcp stream to WebSocket: \
-                                                     {:?}",
-                                                    e
-                                                )
-                                            });
-                                        // There is no guarantee that another
-                                        // readiness event will be delivered
-                                        // until the readiness event has been
-                                        // drained
-                                        state
+                                if let Some(stream) = token_to_tcpstreams.remove(&token) {
+                                    let mut state =
+                                        WebSocketState::Unconnected(UnconnectedState);
+                                    if let Err(e) = state.next_state(
+                                        WebSocketMessage::UpgradeWebSocket(Box::new(stream)),
+                                    ) {
+                                        eprintln!("failed to upgrade tcp stream to WebSocket for token {token:?}: {e:?}. Connection closed.");
+                                        warn!("failed to upgrade tcp stream to WebSocket for token {:?}: {:?}. Connection closed.", token, e);
+                                        continue;
+                                    }
+
+                                    // There is no guarantee that another
+                                    // readiness event will be delivered
+                                    // until the readiness event has been
+                                    // drained
+                                    if let Err(e) =
+                                        state.next_state(WebSocketMessage::MessagesAvailable)
+                                    {
+                                        eprintln!("failed to read messages on new WebSocket with token {token:?}: {e:?}");
+                                        warn!("failed to read messages on new WebSocket with token {:?}: {:?}", token, e);
+                                    }
+
+                                    if let WebSocketState::Closed(mut stream) = state {
+                                        if let Err(e) =
+                                            poll.registry().deregister(stream.get_mut())
+                                        {
+                                            eprintln!("failed to deregister stream for token {token:?}: {e:?}");
+                                            warn!("failed to deregister stream for token {:?}: {:?}", token, e);
+                                        }
+                                    } else {
+                                        token_to_websockets.insert(token, state);
+                                    }
+                                } else {
+                                    let mut needs_removal = false;
+                                    if let Some(state) = token_to_websockets.get_mut(&token) {
+                                        if let Err(e) = state
                                             .next_state(WebSocketMessage::MessagesAvailable)
-                                            .unwrap_or_else(|e| {
-                                                panic!(
-                                                    "failed to read messages on WebSocket: {:?}",
-                                                    e
-                                                )
-                                            });
-                                        if let WebSocketState::Closed(mut stream) = state {
-                                            poll.registry()
-                                                .deregister(stream.get_mut())
-                                                .unwrap_or_else(|e| {
-                                                    panic!("failed to deregister stream: {:?}", e)
-                                                });
-                                        } else {
-                                            token_to_websockets.insert(token, state);
+                                        {
+                                            eprintln!("failed to read messages on WebSocket with token {token:?}: {e:?}");
+                                            warn!("failed to read messages on WebSocket with token {:?}: {:?}", token, e);
+                                        }
+                                        if matches!(state, WebSocketState::Closed(_)) {
+                                            needs_removal = true;
                                         }
                                     }
-                                    None => {
-                                        let state = token_to_websockets
-                                            .get_mut(&token)
-                                            .expect("tcp stream should be upgraded to a WebSocket");
-                                        state
-                                            .next_state(WebSocketMessage::MessagesAvailable)
-                                            .unwrap_or_else(|e| {
-                                                panic!(
-                                                    "failed to read messages on WebSocket: {:?}",
-                                                    e
-                                                )
-                                            });
-                                        if let WebSocketState::Closed(stream) = state {
-                                            poll.registry()
-                                                .deregister(stream.get_mut())
-                                                .unwrap_or_else(|e| {
-                                                    panic!("failed to deregister stream: {:?}", e)
-                                                });
-                                            token_to_websockets.remove(&token).expect(
-                                                "WebSocket should not have been removed yet",
-                                            );
+
+                                    if needs_removal {
+                                        if let Some(WebSocketState::Closed(mut stream)) =
+                                            token_to_websockets.remove(&token)
+                                        {
+                                            if let Err(e) =
+                                                poll.registry().deregister(stream.get_mut())
+                                            {
+                                                eprintln!("failed to deregister stream for token {token:?}: {e:?}");
+                                                warn!("failed to deregister stream for token {:?}: {:?}", token, e);
+                                            }
                                         }
                                     }
                                 }
                             }
 
                             if event.is_writable() {
+                                let mut needs_removal = false;
                                 if let Some(state) = token_to_websockets.get_mut(&token) {
-                                    state.next_state(WebSocketMessage::CanWrite).unwrap_or_else(
-                                        |e| {
-                                            panic!(
-                                                "failed to handle writable event on WebSocket: \
-                                                 {:?}",
-                                                e
-                                            )
-                                        },
-                                    );
-                                    if let WebSocketState::Closed(stream) = state {
-                                        poll.registry()
-                                            .deregister(stream.get_mut())
-                                            .unwrap_or_else(|e| {
-                                                panic!("failed to deregister stream: {:?}", e)
-                                            });
-                                        token_to_websockets
-                                            .remove(&token)
-                                            .expect("WebSocket should not have been removed yet");
+                                    if let Err(e) = state.next_state(WebSocketMessage::CanWrite) {
+                                        eprintln!("failed to handle writable event on WebSocket with token {token:?}: {e:?}");
+                                        warn!("failed to handle writable event on WebSocket with token {:?}: {:?}", token, e);
+                                    }
+                                    if matches!(state, WebSocketState::Closed(_)) {
+                                        needs_removal = true;
+                                    }
+                                }
+
+                                if needs_removal {
+                                    if let Some(WebSocketState::Closed(mut stream)) =
+                                        token_to_websockets.remove(&token)
+                                    {
+                                        if let Err(e) = poll.registry().deregister(stream.get_mut())
+                                        {
+                                            eprintln!(
+                                                "failed to deregister stream for token {token:?}: {e:?}"
+                                            );
+                                            warn!(
+                                                "failed to deregister stream for token {:?}: {:?}",
+                                                token, e
+                                            );
+                                        }
                                     }
                                 }
                             }
@@ -513,8 +553,7 @@ impl ServerStarted {
     pub fn send_message(&self, message: Arc<str>) {
         self.sender.send(message.clone()).unwrap_or_else(|e| {
             panic!(
-                "failed to send text `{}` to WebSocket clients: {:?}",
-                message, e
+                "failed to send text `{message}` to WebSocket clients: {e:?}"
             )
         });
     }
