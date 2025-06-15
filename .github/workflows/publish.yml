@@ -1,0 +1,74 @@
+name: Publish Release Artifacts
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Build and Publish ${{ matrix.kind }}
+    strategy:
+      matrix:
+        kind: ['linuxmuslx64', 'windowsx64', 'macosx64', 'macosaarch64']
+        include:
+          - kind: linuxmuslx64
+            runs_on: ubuntu-24.04
+            nix_target: linuxMuslX64
+            binary_name: mpv_websocket
+            zip_name: mpv_websocket-linux-musl-x64.zip
+          - kind: windowsx64
+            runs_on: ubuntu-24.04
+            nix_target: windowsX64
+            binary_name: mpv_websocket.exe
+            zip_name: mpv_websocket-windows-x64.zip
+          - kind: windowsx86
+            runs_on: ubuntu-24.04
+            nix_target: windowsX86
+            binary_name: mpv_websocket.exe
+            zip_name: mpv_websocket-windows-x86.zip
+          - kind: macosx64
+            runs_on: macos-13
+            nix_target: macosX64
+            binary_name: mpv_websocket
+            zip_name: mpv_websocket-macos-x64.zip
+          - kind: macosaarch64
+            runs_on: macos-14
+            nix_target: macosaarch64
+            binary_name: mpv_websocket
+            zip_name: mpv_websocket-macos-aarch64.zip
+
+    runs-on: ${{ matrix.runs_on }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v16
+
+    - name: Run the Magic Nix Cache
+      uses: DeterminateSystems/magic-nix-cache-action@v8
+
+    - name: Build binary
+      run: |
+        nix build --print-build-logs .#${{ matrix.nix_target }}
+
+    - name: Package binary to zip
+      run: |
+        mkdir release
+        cp result/bin/${{ matrix.binary_name }} release/
+        cd release
+        zip ../${{ matrix.zip_name }} ${{ matrix.binary_name }}
+
+    - name: Upload artifact zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.zip_name }}
+        path: ${{ matrix.zip_name }}
+
+    - name: Publish ZIP to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ matrix.zip_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
