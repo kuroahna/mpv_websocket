@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* Add `i686-pc-windows-gnu` build target.
+
 ## [0.4.2] - 2025-06-15
 
 ### Changed
