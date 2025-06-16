@@ -9,7 +9,7 @@ jobs:
     name: Build and Publish ${{ matrix.kind }}
     strategy:
       matrix:
-        kind: ['linuxmuslx64', 'windowsx64', 'macosx64', 'macosaarch64']
+        kind: ['linuxmuslx64', 'windowsx86', 'windowsx64', 'macosx64', 'macosaarch64']
         include:
           - kind: linuxmuslx64
             runs_on: ubuntu-24.04
@@ -21,6 +21,11 @@ jobs:
             nix_target: windowsX64
             binary_name: mpv_websocket.exe
             zip_name: x86_64-pc-windows-gnu.zip
+          - kind: windowsx86
+            runs_on: ubuntu-24.04
+            nix_target: windowsX86
+            binary_name: mpv_websocket.exe
+            zip_name: i686-pc-windows-gnu.zip
           - kind: macosx64
             runs_on: macos-13
             # no nix_target to use default flake target

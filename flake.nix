@@ -182,12 +182,122 @@
             mpv_websocket = mpv_websocket;
             targetTriple = targetTriple;
           };
+
+        crossCompileForWindowsX86 =
+          let
+            targetTriple = "i686-pc-windows-gnu";
+
+            toolchain =
+              p:
+              p.rust-bin.stable.latest.default.override {
+                extensions = [ "rust-src" ];
+                targets = [ targetTriple ];
+              };
+            craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+
+            src = craneLib.cleanCargoSource ./.;
+
+            # We need to vendor our dependencies since we're recompiling rust
+            # std
+            #
+            # https://github.com/ipetkov/crane/issues/285
+            cargoVendorDir = craneLib.vendorMultipleCargoDeps {
+              cargoLockList = [
+                ./Cargo.lock
+                "${pkgs.rust-bin.stable.latest.rust-src}/lib/rustlib/src/rust/library/Cargo.lock"
+              ];
+            };
+
+            commonArgs = {
+              inherit src;
+              inherit cargoVendorDir;
+              strictDeps = true;
+            };
+
+            mpv_websocket = craneLib.buildPackage (
+              commonArgs
+              // {
+                # Trying to compile with -Zbuild-std with cargoArtifacts using
+                # craneLib.buildDepsOnly which splits the dependency crates into
+                # a separate derivation throws a compile error where we get
+                # undefined reference to _Unwind_Resume despite passing in
+                # panic=abort. Setting to null allows us to get around this
+                # issue where crane will compile the crate without splitting the
+                # dependency into a separate derivation.
+                cargoArtifacts = null;
+
+                nativeBuildInputs = with pkgs; [
+                  pkgsCross.mingw32.stdenv.cc
+                  wine
+                  jq
+                ];
+                buildInputs = with pkgs; [
+                  pkgsCross.mingw32.windows.mingw_w64_pthreads
+                ];
+
+                # Despite compiling with panic=abort, it still makes references
+                # to unwind functions. It should be impossible to call this
+                # function with panic=abort enabled
+                #
+                # https://github.com/rust-lang/rust/issues/47493
+                postPatch = ''
+                  cat << EOF >> src/main.rs
+                  #[no_mangle]
+                  extern "C" fn _Unwind_GetLanguageSpecificData() -> ! {
+                      unreachable!("Unwinding not supported");
+                  }
+                  EOF
+                '';
+
+                preConfigure = ''
+                  # Required for wine
+                  export HOME=$(mktemp --directory)
+                '';
+
+                # Enable unstable features in stable
+                RUSTC_BOOTSTRAP = 1;
+
+                # Compiling for i686-pc-windows-gnu results in undefined
+                # references to _Unwind_Resume linker errors because
+                # i686-pc-windows-gnu has references to unwind in rtstartup
+                # whereas x86_64 does not. Compiling with panic=abort should
+                # remove all references to unwind, but there is a bug where it
+                # is ignored. Hence, we need to recompile rust std with our own
+                # custom target which removes the link to rtstartup
+                #
+                # https://github.com/rust-lang/rust/issues/133826
+                postConfigure = ''
+                  rustc -Z unstable-options --print target-spec-json --target "i686-pc-windows-gnu" > target.json
+                  jq 'del(."pre-link-objects", ."pre-link-objects-fallback", ."post-link-objects", ."post-link-objects-fallback")' target.json > i686-pc-windows-gnu.json
+                '';
+
+                CARGO_TARGET_I686_PC_WINDOWS_GNU_RUSTFLAGS = "-C panic=abort -Zpanic_abort_tests";
+
+                buildPhaseCargoCommand = ''
+                  export cargoBuildLog=$(mktemp)
+                  cargo build -Zbuild-std=std,panic_abort --profile release --frozen --target i686-pc-windows-gnu.json --workspace --message-format json-render-diagnostics > $cargoBuildLog
+                '';
+                cargoTestCommand = "cargo test -Zbuild-std=std,panic_abort --profile release --frozen --target i686-pc-windows-gnu.json --workspace";
+                CARGO_TARGET_I686_PC_WINDOWS_GNU_RUNNER = "wine";
+              }
+            );
+          in
+          {
+            src = src;
+            commonArgs = commonArgs;
+            craneLib = craneLib;
+            cargoArtifacts = cargoArtifacts;
+            mpv_websocket = mpv_websocket;
+            targetTriple = targetTriple;
+          };
+
       in
       {
         formatter = pkgs.nixfmt-rfc-style;
         packages.default = mpv_websocket;
         packages.linuxMuslX64 = crossCompileForLinuxMuslX64.mpv_websocket;
         packages.windowsX64 = crossCompileForWindowsX64.mpv_websocket;
+        packages.windowsX86 = crossCompileForWindowsX86.mpv_websocket;
         checks = {
           inherit mpv_websocket;
 
