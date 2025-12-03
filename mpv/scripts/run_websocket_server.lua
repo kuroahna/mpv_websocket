@@ -54,14 +54,14 @@ end
 local function start_websocket()
   local args = {
     mpv_websocket_path,
-    '-m',
+    "-m",
     mpv_socket,
-    '-w',
+    "-w",
     "6677",
   }
 
   if use_secondary_subs then
-    table.insert(args, '-s')
+    table.insert(args, "-s")
   end
 
   initialised_websocket = mp.command_native_async({
