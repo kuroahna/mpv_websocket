@@ -272,8 +272,11 @@ impl ConnectedState {
 // The "1" in the command is the event id that will be sent back to us on the socket
 // Example response:
 // {"event":"property-change","id":1,"name":"sub-text","data":"hello world"}
-const OBSERVE_PROPERTY_SUB_TEXT: &[u8; 46] =
+const OBSERVE_PROPERTY_SUB_TEXT: &[u8] =
     b"{\"command\":[\"observe_property\",1,\"sub-text\"]}\n";
+
+const OBSERVE_PROPERTY_SECONDARY_SUB_TEXT: &[u8] =
+    b"{\"command\":[\"observe_property\",1,\"secondary-sub-text\"]}\n";
 
 const UTF8_NULL_CHARACTER: u8 = 0;
 const UTF8_NEWLINE_CHARACTER: u8 = b"\n"[0];
@@ -288,6 +291,8 @@ enum EventType {
 enum Property {
     #[serde(rename = "sub-text")]
     SubText,
+    #[serde(rename = "secondary-sub-text")]
+    SecondarySubText,
 }
 
 #[allow(dead_code)]
@@ -301,11 +306,12 @@ struct PropertyChangeEvent {
 
 pub struct Client {
     path: PathBuf,
+    use_secondary_subs: bool,
 }
 
 impl Client {
-    pub fn new(path: PathBuf) -> Self {
-        Self { path }
+    pub fn new(path: PathBuf, use_secondary_subs: bool) -> Self {
+        Self { path, use_secondary_subs }
     }
 
     pub fn poll_and_send_messages_to_server(&mut self, server: websocket::ServerStarted) {
@@ -363,9 +369,16 @@ impl Client {
             write: WriteState::Unwritable,
             sender,
         });
+
+        let observe_command = if self.use_secondary_subs {
+            OBSERVE_PROPERTY_SECONDARY_SUB_TEXT
+        } else {
+            OBSERVE_PROPERTY_SUB_TEXT
+        };
+
         state
             .next_state(SocketMessage::SendText(
-                std::str::from_utf8(OBSERVE_PROPERTY_SUB_TEXT)
+                std::str::from_utf8(observe_command)
                     .expect("observe property sub-text command should be a valid UTF-8 string")
                     .into(),
             ))

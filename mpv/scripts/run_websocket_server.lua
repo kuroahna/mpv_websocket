@@ -1,6 +1,8 @@
 -- mpv_websocket
 -- https://github.com/kuroahna/mpv_websocket
 
+local use_secondary_subs = false
+
 local utils = require("mp.utils")
 
 local platform = mp.get_property_native("platform")
@@ -50,18 +52,24 @@ if platform == "windows" then
 end
 
 local function start_websocket()
+  local args = {
+    mpv_websocket_path,
+    "-m",
+    mpv_socket,
+    "-w",
+    "6677",
+  }
+
+  if use_secondary_subs then
+    table.insert(args, "-s")
+  end
+
   initialised_websocket = mp.command_native_async({
     name = "subprocess",
     playback_only = false,
     capture_stdout = true,
     capture_stderr = true,
-    args = {
-      mpv_websocket_path,
-      "-m",
-      mpv_socket,
-      "-w",
-      "6677",
-    },
+    args = args,
   })
 end
 
@@ -79,5 +87,18 @@ local function toggle_websocket()
   end
 end
 
+local function toggle_subs_type()
+  if use_secondary_subs then
+    use_secondary_subs = false
+  else
+    use_secondary_subs = true
+  end
+  if initialised_websocket then
+    end_websocket()
+    start_websocket()
+  end
+end
+
 mp.register_script_message("togglewebsocket", toggle_websocket)
+mp.register_script_message("togglesubstype", toggle_subs_type)
 start_websocket()

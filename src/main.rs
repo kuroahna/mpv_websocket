@@ -26,6 +26,9 @@ struct Args {
 
     #[arg(short('p'), visible_short_alias('w'), long, default_value_t = 6677)]
     websocket_server_port: u16,
+
+    #[arg(short('s'), long, default_value_t = false)]
+    secondary_subtitles: bool,
 }
 
 struct LazyFileLogger {
@@ -118,5 +121,5 @@ fn main() {
         "Connecting to mpv socket at `{}`",
         args.mpvsocket_path.display()
     );
-    mpv::Client::new(args.mpvsocket_path).poll_and_send_messages_to_server(server);
+    mpv::Client::new(args.mpvsocket_path, args.secondary_subtitles).poll_and_send_messages_to_server(server);
 }
