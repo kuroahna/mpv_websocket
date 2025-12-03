@@ -272,8 +272,7 @@ impl ConnectedState {
 // The "1" in the command is the event id that will be sent back to us on the socket
 // Example response:
 // {"event":"property-change","id":1,"name":"sub-text","data":"hello world"}
-const OBSERVE_PROPERTY_SUB_TEXT: &[u8] =
-    b"{\"command\":[\"observe_property\",1,\"sub-text\"]}\n";
+const OBSERVE_PROPERTY_SUB_TEXT: &[u8] = b"{\"command\":[\"observe_property\",1,\"sub-text\"]}\n";
 
 const OBSERVE_PROPERTY_SECONDARY_SUB_TEXT: &[u8] =
     b"{\"command\":[\"observe_property\",1,\"secondary-sub-text\"]}\n";
@@ -311,7 +310,10 @@ pub struct Client {
 
 impl Client {
     pub fn new(path: PathBuf, use_secondary_subs: bool) -> Self {
-        Self { path, use_secondary_subs }
+        Self {
+            path,
+            use_secondary_subs,
+        }
     }
 
     pub fn poll_and_send_messages_to_server(&mut self, server: websocket::ServerStarted) {

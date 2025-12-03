@@ -121,5 +121,6 @@ fn main() {
         "Connecting to mpv socket at `{}`",
         args.mpvsocket_path.display()
     );
-    mpv::Client::new(args.mpvsocket_path, args.secondary_subtitles).poll_and_send_messages_to_server(server);
+    mpv::Client::new(args.mpvsocket_path, args.secondary_subtitles)
+        .poll_and_send_messages_to_server(server);
 }
